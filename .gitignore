@@ -25,9 +25,21 @@ go.work.sum
 # env file
 .env
 
-# dist directory
+# dist directory & artifacts
 dist/
+*.tar.gz
 
 # tmp/vscode
 tmp/
 .vscode/
+
+# chip-tool
+bin/chip-tool
+
+# Config with secrets
+config.yaml
+devices.yaml
+
+# Storage
+/tmp/matter2mqtt
+*.db

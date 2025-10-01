@@ -6,9 +6,8 @@ mqtt:
   base_topic: matter
 
 matter:
-  fabric_path: ~/.matter_sdk/
+  storage_path: /var/lib/matter2mqtt  # chip-tool storage
 
 bridge:
   log_level: info
-  port: 8080  # Health check endpoint
-  
+  port: 8080

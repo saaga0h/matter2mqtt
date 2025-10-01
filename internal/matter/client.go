@@ -1,25 +1,66 @@
+// internal/matter/client.go
 package matter
 
+import (
+	"context"
+	"fmt"
+	"matter2mqtt/internal/matter/chiptool"
+	"os/exec"
+)
+
 type Client struct {
-	fabricPath string
-	sessions   map[uint64]*Session
+	storagePath string
+	chiptool    *chiptool.Client
+	sessions    map[uint64]*Session
 }
 
-func NewClient(fabricPath string) (*Client, error) {
-	// TODO: Load fabric credentials
-	// TODO: Initialize Matter stack (or wrap chip-tool)
+func NewClient(storagePath string) (*Client, error) {
+	// Find chip-tool binary
+	chipToolPath, err := findChipTool()
+	if err != nil {
+		return nil, fmt.Errorf("chip-tool not found: %w", err)
+	}
+
 	return &Client{
-		fabricPath: fabricPath,
-		sessions:   make(map[uint64]*Session),
+		storagePath: storagePath,
+		chiptool:    chiptool.NewClient(chipToolPath, storagePath),
+		sessions:    make(map[uint64]*Session),
 	}, nil
 }
 
-func (c *Client) Connect(nodeID uint64) (*Session, error) {
-	// TODO: Establish CASE session to device
-	// For now, return a stub session
-	session := &Session{
-		nodeID: nodeID,
+func findChipTool() (string, error) {
+	// Check common locations
+	paths := []string{
+		"/usr/local/bin/chip-tool",
+		"/usr/bin/chip-tool",
+		"./bin/chip-tool",
+		"chip-tool", // in PATH
 	}
+
+	for _, path := range paths {
+		if _, err := exec.LookPath(path); err == nil {
+			return path, nil
+		}
+	}
+
+	return "", fmt.Errorf("chip-tool binary not found in common locations")
+}
+
+func (c *Client) Connect(nodeID uint64) (*Session, error) {
+	if session, exists := c.sessions[nodeID]; exists {
+		return session, nil
+	}
+
+	session := &Session{
+		nodeID:   nodeID,
+		chiptool: c.chiptool,
+		ctx:      context.Background(),
+	}
+
 	c.sessions[nodeID] = session
 	return session, nil
+}
+
+func (c *Client) Close() error {
+	return c.chiptool.Close()
 }

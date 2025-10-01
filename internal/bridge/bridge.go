@@ -2,6 +2,8 @@ package bridge
 
 import (
 	"fmt"
+	"log" // Add this import
+
 	"matter2mqtt/internal/config"
 	"matter2mqtt/internal/matter"
 	"matter2mqtt/internal/mqtt"
@@ -12,11 +14,11 @@ type Bridge struct {
 	deviceRegistry *config.DeviceRegistry
 	matterClient   *matter.Client
 	mqttClient     *mqtt.Client
-	devices        map[uint64]*Device // NodeID → Device handler
+	devices        map[uint64]*Device
 }
 
 func NewBridge(cfg *config.Config, registry *config.DeviceRegistry) (*Bridge, error) {
-	matterClient, err := matter.NewClient(cfg.Matter.FabricPath)
+	matterClient, err := matter.NewClient(cfg.Matter.StoragePath)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +49,7 @@ func (b *Bridge) Start() error {
 	// Initialize all configured devices
 	for nodeID, devCfg := range b.deviceRegistry.Devices {
 		if err := b.initializeDevice(nodeID, devCfg); err != nil {
-			log.Errorf("Failed to initialize device %d: %v", nodeID, err)
+			log.Printf("Failed to initialize device %d: %v", nodeID, err)
 			continue
 		}
 	}
