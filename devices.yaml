@@ -1,0 +1,11 @@
+devices:
+  12345:
+    topic: study/presence
+    sensitivity: high
+    debounce_ms: 2000
+  
+  67890:
+    topic: bedroom/presence
+    sensitivity: medium
+    debounce_ms: 5000
+    

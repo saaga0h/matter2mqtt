@@ -1,0 +1,14 @@
+mqtt:
+  server: localhost
+  port: 1883
+  user: ""
+  password: ""
+  base_topic: matter
+
+matter:
+  fabric_path: ~/.matter_sdk/
+
+bridge:
+  log_level: info
+  port: 8080  # Health check endpoint
+  
