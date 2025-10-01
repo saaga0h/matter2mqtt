@@ -1,3 +1,5 @@
+github.com/cybergarage/go-matter v0.0.0-20250927081213-31dc9f4159ea h1:dZTtwdBSOftLWJ/POryjj9nCq9k5snc0qeym2uMlCAc=
+github.com/cybergarage/go-matter v0.0.0-20250927081213-31dc9f4159ea/go.mod h1:tL9llh9iUPuoau6IP9+ePe+tzGtfNEBkGChirqJroCM=
 github.com/eclipse/paho.mqtt.golang v1.5.1 h1:/VSOv3oDLlpqR2Epjn1Q7b2bSTplJIeV2ISgCl2W7nE=
 github.com/eclipse/paho.mqtt.golang v1.5.1/go.mod h1:1/yJCneuyOoCOzKSsOTUc0AJfpsItBGWvYpBLimhArU=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
