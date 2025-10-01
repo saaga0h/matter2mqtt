@@ -11,15 +11,16 @@ import (
 	"sync"
 )
 
-type Client struct {
+// Make sure RealClient implements Client interface
+type RealClient struct {
 	binaryPath    string
 	storagePath   string
 	mu            sync.RWMutex
-	subscriptions map[string]*exec.Cmd // key -> running process
+	subscriptions map[string]*exec.Cmd
 }
 
-func NewClient(binaryPath, storagePath string) *Client {
-	return &Client{
+func NewClient(binaryPath, storagePath string) Client {
+	return &RealClient{
 		binaryPath:    binaryPath,
 		storagePath:   storagePath,
 		subscriptions: make(map[string]*exec.Cmd),
@@ -27,7 +28,7 @@ func NewClient(binaryPath, storagePath string) *Client {
 }
 
 // Commission pairs a new device
-func (c *Client) Commission(ctx context.Context, nodeID uint64, setupCode string) error {
+func (c *RealClient) Commission(ctx context.Context, nodeID uint64, setupCode string) error {
 	cmd := exec.CommandContext(ctx, c.binaryPath,
 		"pairing", "code",
 		fmt.Sprintf("%d", nodeID),
@@ -44,7 +45,7 @@ func (c *Client) Commission(ctx context.Context, nodeID uint64, setupCode string
 }
 
 // SubscribeOccupancy subscribes to occupancy sensor changes
-func (c *Client) SubscribeOccupancy(ctx context.Context, nodeID uint64, endpoint uint8, callback func(bool, error)) error {
+func (c *RealClient) SubscribeOccupancy(ctx context.Context, nodeID uint64, endpoint uint8, callback func(bool, error)) error {
 	key := fmt.Sprintf("occupancy-%d-%d", nodeID, endpoint)
 
 	cmd := exec.CommandContext(ctx, c.binaryPath,
@@ -105,7 +106,7 @@ func (c *Client) SubscribeOccupancy(ctx context.Context, nodeID uint64, endpoint
 	return nil
 }
 
-func (c *Client) parseOccupancyOutput(r io.Reader, callback func(bool, error)) {
+func (c *RealClient) parseOccupancyOutput(r io.Reader, callback func(bool, error)) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -123,7 +124,7 @@ func (c *Client) parseOccupancyOutput(r io.Reader, callback func(bool, error)) {
 	}
 }
 
-func (c *Client) parseErrors(r io.Reader, callback func(bool, error)) {
+func (c *RealClient) parseErrors(r io.Reader, callback func(bool, error)) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -135,7 +136,7 @@ func (c *Client) parseErrors(r io.Reader, callback func(bool, error)) {
 }
 
 // ReadOccupancy reads current occupancy state
-func (c *Client) ReadOccupancy(ctx context.Context, nodeID uint64, endpoint uint8) (bool, error) {
+func (c *RealClient) ReadOccupancy(ctx context.Context, nodeID uint64, endpoint uint8) (bool, error) {
 	cmd := exec.CommandContext(ctx, c.binaryPath,
 		"occupancysensing", "read", "occupancy",
 		fmt.Sprintf("%d", nodeID),
@@ -164,7 +165,7 @@ func (c *Client) ReadOccupancy(ctx context.Context, nodeID uint64, endpoint uint
 }
 
 // SubscribeIlluminance subscribes to illuminance sensor changes
-func (c *Client) SubscribeIlluminance(ctx context.Context, nodeID uint64, endpoint uint8, callback func(uint16, error)) error {
+func (c *RealClient) SubscribeIlluminance(ctx context.Context, nodeID uint64, endpoint uint8, callback func(uint16, error)) error {
 	key := fmt.Sprintf("illuminance-%d-%d", nodeID, endpoint)
 
 	cmd := exec.CommandContext(ctx, c.binaryPath,
@@ -216,7 +217,7 @@ func (c *Client) SubscribeIlluminance(ctx context.Context, nodeID uint64, endpoi
 }
 
 // ReadIlluminance reads current illuminance value
-func (c *Client) ReadIlluminance(ctx context.Context, nodeID uint64, endpoint uint8) (uint16, error) {
+func (c *RealClient) ReadIlluminance(ctx context.Context, nodeID uint64, endpoint uint8) (uint16, error) {
 	cmd := exec.CommandContext(ctx, c.binaryPath,
 		"illuminancemeasurement", "read", "measured-value",
 		fmt.Sprintf("%d", nodeID),
@@ -246,7 +247,7 @@ func (c *Client) ReadIlluminance(ctx context.Context, nodeID uint64, endpoint ui
 }
 
 // SubscribeBattery subscribes to battery percentage changes
-func (c *Client) SubscribeBattery(ctx context.Context, nodeID uint64, endpoint uint8, callback func(uint8, error)) error {
+func (c *RealClient) SubscribeBattery(ctx context.Context, nodeID uint64, endpoint uint8, callback func(uint8, error)) error {
 	key := fmt.Sprintf("battery-%d-%d", nodeID, endpoint)
 
 	cmd := exec.CommandContext(ctx, c.binaryPath,
@@ -299,7 +300,7 @@ func (c *Client) SubscribeBattery(ctx context.Context, nodeID uint64, endpoint u
 }
 
 // Unsubscribe stops a specific subscription
-func (c *Client) Unsubscribe(key string) error {
+func (c *RealClient) Unsubscribe(key string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -319,7 +320,7 @@ func (c *Client) Unsubscribe(key string) error {
 }
 
 // Close stops all subscriptions
-func (c *Client) Close() error {
+func (c *RealClient) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

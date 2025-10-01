@@ -18,7 +18,12 @@ type Bridge struct {
 }
 
 func NewBridge(cfg *config.Config, registry *config.DeviceRegistry) (*Bridge, error) {
-	matterClient, err := matter.NewClient(cfg.Matter.StoragePath)
+	nodeIDs := make([]uint64, 0, len(registry.Devices))
+	for nodeID := range registry.Devices {
+		nodeIDs = append(nodeIDs, nodeID)
+	}
+
+	matterClient, err := matter.NewClient(cfg.Matter.StoragePath, nodeIDs)
 	if err != nil {
 		return nil, err
 	}

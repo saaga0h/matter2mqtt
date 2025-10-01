@@ -16,7 +16,7 @@ type Subscription struct {
 
 type Session struct {
 	nodeID   uint64
-	chiptool *chiptool.Client
+	chiptool chiptool.Client // NOT *chiptool.Client
 	ctx      context.Context
 }
 

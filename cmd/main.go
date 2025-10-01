@@ -5,12 +5,19 @@ import (
 	"log"
 	"matter2mqtt/internal/bridge"
 	"matter2mqtt/internal/config"
+	"os"
 )
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "Path to config file")
 	devicesPath := flag.String("devices", "devices.yaml", "Path to devices file")
+	mock := flag.Bool("mock", false, "Use mock chip-tool for testing")
 	flag.Parse()
+
+	if *mock {
+		os.Setenv("MOCK_CHIPTOOL", "true")
+		log.Println("Running in MOCK mode")
+	}
 
 	// Load configuration
 	cfg, err := config.LoadConfig(*configPath)
