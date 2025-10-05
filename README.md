@@ -1,11 +1,12 @@
 # matter2mqtt
 
-Bridge Matter/Thread devices to MQTT, inspired by Zigbee2MQTT architecture.
+Bridge Matter/Thread devices to MQTT, inspired by the Zigbee2MQTT architecture.
 
-## Quick Start
-Download [latest release](releases) and extract...
+> **Status: Work in Progress**
+>
+> This project is under active development and is not yet production-ready. Breaking changes and incomplete features are expected. Contributions and feedback are welcome!
 
-## Why matter2mqtt?
+## Features
 - MQTT-first architecture (not controller-centric)
 - Clean separation: devices → MQTT → your services
 - Works with any MQTT subscriber
@@ -16,6 +17,34 @@ Download [latest release](releases) and extract...
 - MQTT broker
 - Matter/Thread devices
 
+## Quick Start
+
+Download the [latest release](releases) and extract it, or build from source (see below).
+
 ## Configuration
 
-TODO
+Configuration is managed via `config.yaml` and `devices.yaml`.
+
+> **TODO:** Add detailed configuration instructions.
+
+## Building from Source
+
+```sh
+# Clone the repository
+git clone https://github.com/yourusername/matter2mqtt.git
+cd matter2mqtt
+
+# Initialize Go modules
+go mod tidy
+
+# Build the bridge
+make build
+```
+
+## Contributing
+
+Contributions, bug reports, and feature requests are welcome! Please open an issue or pull request on GitHub.
+
+## License
+
+This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
