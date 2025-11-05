@@ -1,8 +1,26 @@
 # matter2mqtt
 
-**Bridge Matter/Thread devices to MQTT**, inspired by the Zigbee2MQTT architecture.
+## Zigbee2MQTT, but for Matter
 
-Break free from vendor lock-in. Control your Matter devices through open, transparent MQTT messaging.
+**If you use [Zigbee2MQTT](https://www.zigbee2mqtt.io/), you already know why this exists.**
+
+Just like Zigbee2MQTT freed Zigbee devices from proprietary hubs (Philips Hue Bridge, IKEA Gateway, etc.), **matter2mqtt frees Matter devices from vendor ecosystems** (Apple Home, Google Home, SmartThings).
+
+```bash
+# See everything happening in real-time (just like Zigbee2MQTT)
+mosquitto_sub -v -t "matter/#"
+
+matter/bedroom/motion {"presence": true, "timestamp": "..."}
+matter/living-room/temp {"temperature": 21.5, "humidity": 45}
+matter/kitchen/light {"state": "on", "brightness": 80}
+```
+
+**Same philosophy:**
+- 🔓 Break vendor lock-in → Use any MQTT client
+- 🔍 Full transparency → See all messages
+- 📡 Open standard → MQTT, not proprietary protocols
+- 🏠 Local control → No cloud dependencies
+- 🛠️ Universal integration → Works with everything
 
 > **Status: Work in Progress**
 >
@@ -12,7 +30,7 @@ Break free from vendor lock-in. Control your Matter devices through open, transp
 
 **The Problem:** Most Matter border routers lock you into vendor ecosystems (Apple Home, Google Home, SmartThings, etc.). You can't see what's happening, can't easily integrate with other systems, and are dependent on vendor apps and clouds.
 
-**The Solution:** matter2mqtt gives you **open architecture** with **transparent messaging**.
+**The Solution:** Apply the proven Zigbee2MQTT model to Matter/Thread.
 
 ### Key Benefits
 
