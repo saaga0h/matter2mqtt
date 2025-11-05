@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # MQTT Broker (required for matter2mqtt)
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+    networks:
+      - matter-network
+    restart: unless-stopped
+
+  # Open Thread Border Router
+  otbr:
+    image: openthread/otbr:latest
+    container_name: otbr
+    privileged: true
+    network_mode: host
+    volumes:
+      - otbr_data:/data
+    devices:
+      # USB Thread/Matter dongle - CHANGE THIS to match your device!
+      # Find your device with: ls -l /dev/serial/by-id/
+      # Example for Nordic nRF52840 dongle:
+      # - /dev/serial/by-id/usb-Nordic_Semiconductor_nRF52840_DK_000680012345:/dev/ttyACM0
+      # Example for SiLabs dongle:
+      # - /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_abc123:/dev/ttyUSB0
+      - ${THREAD_DEVICE:-/dev/ttyACM0}:/dev/ttyACM0
+    environment:
+      # OTBR Configuration
+      - INFRA_IF_NAME=eth0
+      - BACKBONE_ROUTER=1
+      - NAT64=0
+      - DNS64=0
+      - DOCKER=1
+      # Thread Network Configuration (customize these)
+      - NETWORK_NAME=OpenThreadDemo
+      - CHANNEL=15
+      - PANID=0x1234
+      - EXTPANID=1111111122222222
+      - NETWORKKEY=00112233445566778899aabbccddeeff
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+
+  # matter2mqtt Bridge
+  matter2mqtt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: matter2mqtt
+    privileged: true
+    network_mode: host
+    volumes:
+      # Configuration files
+      - ./config.yaml:/app/config/config.yaml:ro
+      - ./devices.yaml:/app/config/devices.yaml:ro
+      # Matter storage (chip-tool state)
+      - matter_data:/var/lib/matter2mqtt
+      # Optional: Mount chip-tool binary from host if not built into image
+      # - /usr/local/bin/chip-tool:/usr/local/bin/chip-tool:ro
+    devices:
+      # USB Matter dongle (if different from Thread dongle)
+      # Some dongles can serve both roles
+      - ${MATTER_DEVICE:-/dev/ttyACM0}:/dev/ttyACM0
+    environment:
+      - MATTER_STORAGE_PATH=/var/lib/matter2mqtt
+      # Uncomment for mock mode (testing without hardware)
+      # - MOCK_CHIPTOOL=true
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+      - otbr
+
+volumes:
+  mosquitto_data:
+  mosquitto_logs:
+  otbr_data:
+  matter_data:
+
+networks:
+  matter-network:
+    driver: bridge
