@@ -2,6 +2,10 @@
 
 This guide explains how to run **matter2mqtt** and **Open Thread Border Router (OTBR)** using Docker Compose, including how to expose USB Matter/Thread dongles to the containers.
 
+> **Important Note:** Your LAN does **NOT** need IPv6 routing! Thread creates an isolated IPv6 network via radio. Only your host needs link-local IPv6 (enabled by default). See [IPv6 Requirements](#ipv6-requirements) for details.
+
+> **macOS Users:** See [DOCKER_MACOS.md](DOCKER_MACOS.md) for macOS-specific setup (USB passthrough limitations apply).
+
 ## Table of Contents
 
 1. [Prerequisites](#prerequisites)
@@ -137,6 +141,41 @@ echo "net.ipv6.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
 - Matter devices use link-local addresses for initial pairing
 - OTBR creates a Thread network with its own IPv6 prefix
 - Global IPv6 connectivity is optional (only for remote access)
+
+### Does My LAN/Router Need IPv6 Routing?
+
+**Critical Question:** Does my network router need IPv6 enabled? Does my LAN need IPv6 routing?
+
+**Answer: NO!** Thread network is **isolated from your LAN**.
+
+**Why this works:**
+
+```
+Your LAN (IPv4 only) ←→ Computer ←→ Docker ←→ USB ←→ Thread Radio Network (IPv6)
+                                                          ↓
+                                                    Matter Devices
+
+• LAN traffic: MQTT over IPv4 (matter/topic ← "data")
+• Thread traffic: IPv6 over 802.15.4 radio (isolated, not on Ethernet/Wi-Fi)
+• The USB dongle bridges these via serial (not network routing)
+```
+
+**Communication flow:**
+1. Matter device (Thread IPv6) → Radio → USB dongle
+2. USB dongle → Serial/UART → matter2mqtt container
+3. matter2mqtt → IPv4 MQTT localhost:1883 → Mosquitto
+4. Mosquitto → IPv4 over your LAN → Other devices
+
+**Your LAN only carries IPv4 MQTT traffic!** The Thread network (IPv6) is completely separate, using 802.15.4 radio, not Ethernet/Wi-Fi.
+
+**See:** [docs/NETWORK_ISOLATION.md](docs/NETWORK_ISOLATION.md) for detailed diagrams and explanation.
+
+**Summary:**
+- ✅ LAN can be IPv4-only
+- ✅ Router doesn't need IPv6 routing
+- ✅ ISP doesn't need to provide IPv6
+- ✅ Only host needs link-local IPv6 (fe80::) - enabled by default
+- ✅ Thread network is isolated via radio, not routed through your LAN
 
 ### What About Docker Bridge Networks?
 
