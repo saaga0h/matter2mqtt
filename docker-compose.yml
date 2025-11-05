@@ -21,6 +21,10 @@ services:
     image: openthread/otbr:latest
     container_name: otbr
     privileged: true
+    # IMPORTANT: Uses host networking for IPv6 access and border router functionality
+    # Matter/Thread require IPv6, and OTBR needs to create network interfaces on host
+    # Ensure IPv6 is enabled on host: cat /proc/sys/net/ipv6/conf/all/disable_ipv6
+    # Should show: 0 (enabled). Run ./scripts/verify-ipv6.sh to check.
     network_mode: host
     volumes:
       - otbr_data:/data
@@ -56,6 +60,9 @@ services:
       dockerfile: Dockerfile
     container_name: matter2mqtt
     privileged: true
+    # IMPORTANT: Uses host networking for IPv6 access and mDNS discovery
+    # Matter commissioning requires IPv6 (link-local addresses are sufficient)
+    # chip-tool uses IPv6 for device discovery and communication
     network_mode: host
     volumes:
       # Configuration files

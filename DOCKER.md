@@ -5,11 +5,12 @@ This guide explains how to run **matter2mqtt** and **Open Thread Border Router (
 ## Table of Contents
 
 1. [Prerequisites](#prerequisites)
-2. [Quick Start](#quick-start)
-3. [USB Device Configuration](#usb-device-configuration)
-4. [Service Architecture](#service-architecture)
-5. [Configuration](#configuration)
-6. [Troubleshooting](#troubleshooting)
+2. [IPv6 Requirements](#ipv6-requirements)
+3. [Quick Start](#quick-start)
+4. [USB Device Configuration](#usb-device-configuration)
+5. [Service Architecture](#service-architecture)
+6. [Configuration](#configuration)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -32,6 +33,160 @@ This guide explains how to run **matter2mqtt** and **Open Thread Border Router (
 docker --version
 docker compose version
 ```
+
+---
+
+## IPv6 Requirements
+
+### Why Matter Needs IPv6
+
+**Matter protocol is built entirely on IPv6:**
+- Thread networks use IPv6 exclusively (6LoWPAN)
+- Matter devices communicate using IPv6 link-local addresses
+- Device commissioning requires IPv6 multicast/unicast
+- The Border Router bridges Thread's IPv6 network to your infrastructure
+
+### Current Docker Setup: Host Networking
+
+**Good news: The docker-compose.yml already handles IPv6 correctly!**
+
+Both `otbr` and `matter2mqtt` use **`network_mode: host`**, which means:
+- ✅ Containers share the host's IPv6 stack directly
+- ✅ No Docker network virtualization (full IPv6 access)
+- ✅ Can use link-local addresses for Matter commissioning
+- ✅ OTBR can create Thread network interfaces on the host
+
+### Communication Paths
+
+```
+Host IPv6 Stack (Linux kernel)
+     ↓
+┌────┴─────────────┐
+│   matter2mqtt    │ ←→ IPv6 ←→ Matter Devices (via Thread)
+│  (host network)  │
+└─────┬────────────┘
+      │ USB Serial
+      ↓
+   Dongle (Radio) ←→ Thread Network (IPv6/6LoWPAN) ←→ Matter Devices
+```
+
+**Key Point:** USB dongle communication is **serial/UART**, not TCP/IP. IPv6 is only needed for:
+1. Matter device discovery (mDNS over IPv6)
+2. Matter commissioning (IPv6 unicast)
+3. Thread routing (OTBR advertises IPv6 routes)
+
+### Verify Your System Has IPv6
+
+**Run the verification script:**
+
+```bash
+./scripts/verify-ipv6.sh
+```
+
+This checks:
+- IPv6 kernel support
+- IPv6 sysctl configuration
+- IPv6 addresses (global and link-local)
+- IPv6 forwarding (for OTBR)
+- IPv6 routing table
+- Docker IPv6 support
+- mDNS/Avahi service
+- USB devices
+
+**Manual checks:**
+
+```bash
+# Check if IPv6 is enabled
+cat /proc/sys/net/ipv6/conf/all/disable_ipv6
+# Should output: 0 (enabled)
+
+# List IPv6 addresses
+ip -6 addr show
+
+# Check for link-local addresses (fe80::)
+ip -6 addr show scope link
+
+# Test IPv6 connectivity (optional)
+ping6 -c 3 2001:4860:4860::8888
+```
+
+### Enable IPv6 on Linux Host
+
+If IPv6 is disabled on your host:
+
+```bash
+# Temporarily enable IPv6
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+# Permanently enable IPv6
+echo "net.ipv6.conf.all.disable_ipv6=0" | sudo tee -a /etc/sysctl.conf
+echo "net.ipv6.conf.default.disable_ipv6=0" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+
+# Enable IPv6 forwarding (required for OTBR)
+sudo sysctl -w net.ipv6.conf.all.forwarding=1
+echo "net.ipv6.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf
+```
+
+### Do You Need Global IPv6?
+
+**Short answer: No!**
+
+- **Link-local IPv6 (fe80::) is sufficient** for Matter commissioning
+- Matter devices use link-local addresses for initial pairing
+- OTBR creates a Thread network with its own IPv6 prefix
+- Global IPv6 connectivity is optional (only for remote access)
+
+### What About Docker Bridge Networks?
+
+If you wanted to use Docker bridge networking instead of host networking (not recommended for Matter), you would need to enable IPv6:
+
+```yaml
+# Example: NOT used in current setup
+networks:
+  matter-net:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: fd00:dead:beef::/48
+          gateway: fd00:dead:beef::1
+```
+
+**However**, this is **NOT needed** because:
+- OTBR **requires** host networking for border router functionality
+- matter2mqtt **requires** host networking for mDNS discovery
+- The current setup is correct as-is
+
+### Common IPv6 Issues
+
+**Issue: IPv6 disabled in kernel**
+```bash
+# Check boot parameters
+cat /proc/cmdline | grep ipv6.disable
+
+# If shows ipv6.disable=1, edit GRUB config:
+sudo nano /etc/default/grub
+# Remove or change: ipv6.disable=1 to ipv6.disable=0
+sudo update-grub
+sudo reboot
+```
+
+**Issue: No IPv6 addresses**
+```bash
+# Check if NetworkManager is managing interfaces
+nmcli device status
+
+# Enable IPv6 on interface (example: eth0)
+nmcli connection modify eth0 ipv6.method auto
+nmcli connection up eth0
+```
+
+**Issue: IPv6 works on host but not in container**
+- This should NOT happen with `network_mode: host`
+- Verify with: `docker exec -it matter2mqtt ip -6 addr show`
+- If different from host output, check Docker daemon config
 
 ---
 
@@ -66,7 +221,23 @@ Create your `devices.yaml`:
 cp devices.yaml.example devices.yaml
 ```
 
-### 2. Identify Your USB Device
+### 2. Verify IPv6 is Enabled
+
+**IMPORTANT**: Matter requires IPv6. Run the verification script:
+
+```bash
+./scripts/verify-ipv6.sh
+```
+
+If the script reports issues, follow the instructions in the [IPv6 Requirements](#ipv6-requirements) section above.
+
+**Quick fix if IPv6 is disabled:**
+```bash
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+sudo sysctl -w net.ipv6.conf.all.forwarding=1
+```
+
+### 3. Identify Your USB Device
 
 **CRITICAL STEP**: You need to find the USB device path for your Thread/Matter dongle.
 
@@ -92,7 +263,7 @@ ls -l /dev/tty{ACM,USB}*
 - Using `/dev/serial/by-id/...` is MUCH more reliable
 - Note the device name for the next step
 
-### 3. Configure USB Device in Docker Compose
+### 4. Configure USB Device in Docker Compose
 
 Create a `.env` file to specify your USB device:
 
@@ -114,7 +285,7 @@ devices:
   - /dev/serial/by-id/usb-Nordic_Semiconductor_nRF52840_DK_000680012345:/dev/ttyACM0
 ```
 
-### 4. Build and Start Services
+### 5. Build and Start Services
 
 ```bash
 # Build the matter2mqtt image
@@ -131,7 +302,7 @@ docker compose logs -f matter2mqtt
 docker compose logs -f otbr
 ```
 
-### 5. Verify Services are Running
+### 6. Verify Services are Running
 
 ```bash
 # Check service status
