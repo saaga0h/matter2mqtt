@@ -1,6 +1,8 @@
 # Docker Compose Setup for matter2mqtt
 
-This guide explains how to run **matter2mqtt** and **Open Thread Border Router (OTBR)** using Docker Compose, including how to expose USB Matter/Thread dongles to the containers.
+This guide explains how to run **matter2mqtt** and **Open Thread Border Router (OTBR)** using Docker Compose with **USB-attached Thread dongles**.
+
+> **Network-Attached Thread Radio?** If you have a network-attached Thread radio (like SLZB-MR1) that connects via TCP instead of USB, see [DOCKER_TCP.md](DOCKER_TCP.md) for setup instructions.
 
 > **Important Note:** Your LAN does **NOT** need IPv6 routing! Thread creates an isolated IPv6 network via radio. Only your host needs link-local IPv6 (enabled by default). See [IPv6 Requirements](#ipv6-requirements) for details.
 
@@ -26,6 +28,8 @@ This guide explains how to run **matter2mqtt** and **Open Thread Border Router (
   - Silicon Labs EFR32 series
   - Texas Instruments CC2652/CC1352
   - Any Thread-compatible radio module
+
+> **Note:** If you have a **network-attached Thread radio** (SLZB-MR1, SLZB-06, etc.) that connects via TCP/Ethernet, you don't need a USB dongle. See [DOCKER_TCP.md](DOCKER_TCP.md) instead.
 
 ### Required Software
 - Docker Engine 20.10+

@@ -72,6 +72,8 @@ matter/kitchen/light {"state": "on", "brightness": 80}
 
 ## Requirements
 - Thread Border Router (OTBR + compatible radio)
+  - USB Thread dongle (nRF52840, EFR32, CC2652, etc.) **OR**
+  - Network-attached Thread radio (SLZB-MR1, SLZB-06, etc. via TCP)
 - MQTT broker
 - Matter/Thread devices
 
@@ -91,9 +93,10 @@ nano config.yaml
 docker compose up -d
 ```
 
-**See:** [DOCKER.md](DOCKER.md) for complete Docker setup instructions including USB device configuration.
-
-**macOS users:** See [DOCKER_MACOS.md](DOCKER_MACOS.md) for macOS-specific instructions.
+**Setup guides:**
+- **USB Thread dongle:** [DOCKER.md](DOCKER.md) - Complete Docker setup with USB device configuration
+- **Network-attached radio (TCP):** [DOCKER_TCP.md](DOCKER_TCP.md) - Setup for SLZB-MR1 and similar devices
+- **macOS users:** [DOCKER_MACOS.md](DOCKER_MACOS.md) - macOS-specific instructions and limitations
 
 ### Option 2: Binary Release
 
@@ -106,7 +109,8 @@ Download the [latest release](releases) and extract it, or build from source (se
 - **[docs/NETWORK_ISOLATION.md](docs/NETWORK_ISOLATION.md)** - Understanding IPv6 and Thread network isolation
 
 ### Setup Guides
-- **[DOCKER.md](DOCKER.md)** - Docker Compose setup with OTBR (Linux)
+- **[DOCKER.md](DOCKER.md)** - Docker Compose setup with USB Thread dongle
+- **[DOCKER_TCP.md](DOCKER_TCP.md)** - Docker setup with network-attached Thread radio (SLZB-MR1, etc.) ⚠️ Untested
 - **[DOCKER_MACOS.md](DOCKER_MACOS.md)** - macOS-specific Docker instructions and limitations
 - **[chip-tool.md](chip-tool.md)** - How to get or build chip-tool binary
 
