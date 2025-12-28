@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"crypto/tls"
 	"fmt"
 	"matter2mqtt/internal/config"
 
@@ -14,7 +15,14 @@ type Client struct {
 
 func NewClient(cfg config.MQTTConfig) (*Client, error) {
 	opts := paho.NewClientOptions()
-	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", cfg.Server, cfg.Port))
+	switch cfg.Tls {
+	case false:
+    	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", cfg.Server, cfg.Port))
+    case true:
+    	opts.AddBroker(fmt.Sprintf("ssl://%s:%d", cfg.Server, cfg.Port))
+    	tlsConfig := &tls.Config{}
+    	opts.SetTLSConfig(tlsConfig)
+    }
 	opts.SetUsername(cfg.User)
 	opts.SetPassword(cfg.Password)
 	opts.SetClientID("matter2mqtt")

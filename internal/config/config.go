@@ -15,6 +15,7 @@ type Config struct {
 type MQTTConfig struct {
 	Server    string `yaml:"server"`
 	Port      int    `yaml:"port"`
+	Tls       bool   `yaml:"tls"`
 	User      string `yaml:"user"`
 	Password  string `yaml:"password"`
 	BaseTopic string `yaml:"base_topic"`
